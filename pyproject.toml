@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "ata-generator"
+version = "0.1.0"
+description = "Gerador de Observações para ATAS Escolares - Duque de Caxias"
+authors = ["Seu Nome <seuemail@example.com>"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+streamlit = "^1.30.0"
+pandas = "^2.0.0"
+openpyxl = "^3.1.0"
+fpdf2 = "^2.7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

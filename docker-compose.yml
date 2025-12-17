@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: ata-generator
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    # Evita que o Python bufferize logs, garantindo que erros apareçam no terminal na hora
+    environment:
+      - PYTHONUNBUFFERED=1

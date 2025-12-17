@@ -1,0 +1,32 @@
+/* style.css */
+
+/* Rodapé fixo na parte inferior (opcional, se quiser sticky) */
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #f1f1f1;
+    color: #555;
+    text-align: center;
+    padding: 10px;
+    font-size: 14px;
+    border-top: 1px solid #ddd;
+    z-index: 100;
+}
+
+/* Rodapé no fluxo do conteúdo (mais seguro para não cobrir botões) */
+.content-footer {
+    text-align: center;
+    color: #888;
+    font-size: 14px;
+    margin-top: 50px;
+    margin-bottom: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+/* Exemplo: Customizar botões primários (opcional) */
+div.stButton > button:first-child {
+    font-weight: bold;
+}
