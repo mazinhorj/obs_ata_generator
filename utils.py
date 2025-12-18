@@ -1,7 +1,19 @@
 from fpdf import FPDF
 import datetime
 
-# --- CONSTANTES DE TEXTO ---
+# --- MAPEAMENTO DE TÍTULOS PARA O PDF ---
+# Aqui definimos o nome bonito que vai aparecer no cabeçalho de cada bloco no PDF
+TITULOS_OBSERVACOES = {
+    "1": "Retido por Frequência (Ano Anterior)",
+    "2": "Retido por Frequência (Ano Atual)",
+    "3": "Progressão Parcial (Notas)",
+    "4": "Progressão Parcial (Disciplinas)",
+    "5": "Atendimento Educacional Especializado (AEE)",
+    "6": "Turma Regular (Referência AEE)",
+    "7": "Classificação / Reclassificação"
+}
+
+# --- CONSTANTES DE TEXTO (Templates) ---
 TEXTOS_PADRAO = {
     "1": {
         "singular": "O aluno {nomes}, retido por insuficiência de frequência em {ano_anterior}, foi reclassificado em {ano_corrente}, de acordo com LDBEN nº 9394/1996- Art. 23, § 1º e Regimento Escolar da Rede Municipal de Duque de Caxias Art.94, inciso II.",
@@ -11,21 +23,20 @@ TEXTOS_PADRAO = {
         "singular": "O aluno {nomes}, retido por infrequência em {ano_corrente} foi indicado a reclassificação de acordo com o Regimento Escolar da Rede Municipal de Duque de Caxias Art.94, inciso II; LDB Art.23, §1º.",
         "plural": "Os alunos {nomes}, retidos por infrequência em {ano_corrente} foram indicados a reclassificação de acordo com o Regimento Escolar da Rede Municipal de Duque de Caxias Art.94, inciso II; LDB Art.23, §1º."
     },
-    # TIPO 7 COM DATA DE REGISTRO
     "7": {
-        "1": {  # Sem comprovação
+        "1": {
             "singular": "O aluno {nomes} foi Classificado em {data_registro}, de acordo com a LDBEN nº 9394/1996, Art. 24, inciso II, alínea c e Regimento Escolar da Rede Municipal de Duque de Caxias, Art. 92 - §§ 1º e 2º.",
             "plural":   "Os alunos {nomes} foram Classificados em {data_registro}, de acordo com a LDBEN nº 9394/1996, Art. 24, inciso II, alínea c e Regimento Escolar da Rede Municipal de Duque de Caxias, Art. 92 - §§ 1º e 2º."
         },
-        "2": {  # Transferência
+        "2": {
             "singular": "O aluno {nomes} foi Reclassificado em {data_registro}, de acordo com a LDBEN nº 9394/1996- Art. 23, § 1º e Regimento Escolar da Rede Municipal de Duque de Caxias Art.94, inciso I.",
             "plural":   "Os alunos {nomes} foram Reclassificados em {data_registro}, de acordo com a LDBEN nº 9394/1996- Art. 23, § 1º e Regimento Escolar da Rede Municipal de Duque de Caxias Art.94, inciso I."
         },
-        "3": {  # Exterior
+        "3": {
             "singular": "O aluno {nomes} foi Reclassificado em {data_registro}, de acordo com a LDBEN nº 9394/1996- Art. 23, § 1º e Regimento Escolar da Rede Municipal de Duque de Caxias Art.94, inciso I.",
             "plural":   "Os alunos {nomes} foram Reclassificados em {data_registro}, de acordo com a LDBEN nº 9394/1996- Art. 23, § 1º e Regimento Escolar da Rede Municipal de Duque de Caxias Art.94, inciso I."
         },
-        "4": {  # PP para EJA
+        "4": {
             "singular": "O aluno {nomes} foi Reclassificado em {data_registro}, de acordo com a LDBEN 9394/1996 Art. 23, § 1º e Regimento Escolar da Rede Municipal de Duque de Caxias, Art.94, Inciso III.",
             "plural":   "Os alunos {nomes} foram Reclassificados em {data_registro}, de acordo com a LDBEN 9394/1996 Art. 23, § 1º e Regimento Escolar da Rede Municipal de Duque de Caxias, Art.94, Inciso III."
         }
@@ -38,7 +49,6 @@ TEXTOS_PADRAO = {
 
 
 def formatar_lista_nomes(nomes):
-    """Junta nomes com vírgula e 'e' no final."""
     if not nomes:
         return ""
     nomes = [n.upper() for n in nomes]
@@ -57,15 +67,12 @@ def gerar_texto_observacao(tipo, dados):
         template = TEXTOS_PADRAO[tipo]["plural" if is_plural else "singular"]
         return template.format(nomes=nomes, ano_corrente=ano_atual, ano_anterior=ano_anterior)
 
-    # Lógica Tipo 7 (Com Data)
     elif tipo == "7":
         nomes = formatar_lista_nomes(dados['alunos'])
         is_plural = len(dados['alunos']) > 1
         sub_opcao = dados['sub_opcao']
-        data_registro = dados['data']  # Recebe a string formatada
-
+        data_registro = dados['data']
         template = TEXTOS_PADRAO["7"][sub_opcao]["plural" if is_plural else "singular"]
-
         return template.format(nomes=nomes, data_registro=data_registro)
 
     elif tipo == "3":
@@ -103,19 +110,23 @@ def criar_pdf(observacoes):
     pdf.add_page()
     pdf.set_font("Helvetica", size=12)
 
+    # Título Principal do PDF
     pdf.cell(0, 10, "Observações para ATA de Resultados Finais",
              ln=True, align='C')
     pdf.ln(10)
 
     for obs in observacoes:
         tipo, texto = obs[1], obs[2]
+
+        # --- ALTERAÇÃO AQUI ---
+        # Busca o nome descritivo no dicionário TITULOS_OBSERVACOES.
+        # Se não achar (erro), usa "Observação Tipo X" como fallback.
+        titulo_descritivo = TITULOS_OBSERVACOES.get(
+            tipo, f"Observação Tipo {tipo}")
+
         pdf.set_font("Helvetica", 'B', size=10)
-
-        titulo_obs = f"Observação (Tipo {tipo})"
-        if tipo == "7":
-            titulo_obs += " - Classificação/Reclassificação"
-
-        pdf.cell(0, 6, f"{titulo_obs}:", ln=True)
+        pdf.cell(0, 6, f"{titulo_descritivo}:", ln=True)
+        # ----------------------
 
         pdf.set_font("Helvetica", size=11)
         pdf.multi_cell(0, 6, texto)

@@ -28,13 +28,14 @@ local_css("style.css")
 # --- GERENCIAMENTO DE ESTADO (MEMÓRIA) ---
 if 'observacoes_sessao' not in st.session_state:
     st.session_state['observacoes_sessao'] = []
+if 'sucesso_salvar' not in st.session_state:
+    st.session_state['sucesso_salvar'] = False
 
 # --- CABEÇALHO ---
 st.title("🏫 ATAS de Resultados Finais - Gerador de Observações")
 st.markdown("### Rede Municipal de Duque de Caxias")
 
 # --- PLACEHOLDER PARA O NOME DA ESCOLA ---
-# Cria um espaço vazio aqui que será preenchido assim que o arquivo for lido
 school_header = st.empty()
 
 # --- FUNÇÕES AUXILIARES ---
@@ -48,6 +49,34 @@ def is_turma_elegivel_pp(turma_str):
         return 601 <= valor <= 999
     except (ValueError, TypeError):
         return False
+
+# Callback para limpar seleção (usado no on_change dos selects)
+
+
+def limpar_selecao_alunos():
+    if 'alunos_multiselect' in st.session_state:
+        st.session_state['alunos_multiselect'] = []
+    if 'preview_texto' in st.session_state:
+        del st.session_state['preview_texto']
+
+# Callback para SALVAR
+
+
+def salvar_observacao(tipo, texto):
+    # 1. Salva na lista
+    novo_id = len(st.session_state['observacoes_sessao']) + 1
+    nova_obs = (novo_id, tipo, texto)
+    st.session_state['observacoes_sessao'].append(nova_obs)
+
+    # 2. Limpa o preview
+    if 'preview_texto' in st.session_state:
+        del st.session_state['preview_texto']
+
+    # 3. Limpa a seleção de alunos
+    st.session_state['alunos_multiselect'] = []
+
+    # 4. Marca flag para mostrar sucesso
+    st.session_state['sucesso_salvar'] = True
 
 
 # --- BARRA LATERAL (SIDEBAR) ---
@@ -63,11 +92,9 @@ with st.sidebar:
     # --- BOTÃO LIMPAR ---
     if st.button("🗑️ Limpar todas as observações", type="secondary"):
         st.session_state['observacoes_sessao'] = []
+        limpar_selecao_alunos()
 
-        if 'preview_texto' in st.session_state:
-            del st.session_state['preview_texto']
-
-        msg = st.success("Histórico limpo com sucesso!")
+        msg = st.success("Histórico e seleções limpos!")
         time.sleep(1.2)
         msg.empty()
         st.rerun()
@@ -78,13 +105,8 @@ nome_escola = None
 
 if uploaded_file:
     try:
-        # ---------------------------------------------------------
-        # 1. LEITURA DO NOME DA ESCOLA (Célula B4)
-        # ---------------------------------------------------------
-        # Lê apenas as primeiras 5 linhas sem cabeçalho para pegar a célula específica
+        # LEITURA DO NOME DA ESCOLA
         header_df = pd.read_excel(uploaded_file, header=None, nrows=5)
-
-        # B4 no Excel = Linha índice 3, Coluna índice 1
         try:
             raw_escola = header_df.iloc[3, 1]
             if pd.notna(raw_escola):
@@ -92,12 +114,9 @@ if uploaded_file:
         except IndexError:
             nome_escola = None
 
-        # RESET DO PONTEIRO: Volta para o início do arquivo para a leitura principal
         uploaded_file.seek(0)
 
-        # ---------------------------------------------------------
-        # 2. LEITURA DOS DADOS (PRINCIPAL)
-        # ---------------------------------------------------------
+        # LEITURA DOS DADOS
         df_raw = pd.read_excel(uploaded_file, header=8)
 
         if df_raw.shape[1] >= 7:
@@ -115,21 +134,18 @@ if uploaded_file:
             st.error("❌ O arquivo enviado não possui o número mínimo de colunas.")
             df = None
 
-    except Exception as e:
-        st.error(f"❌ Erro ao ler o arquivo: {e}")
+    except Exception:
+        st.error(f"❌ Erro ao ler o arquivo.")
 
-# --- EXIBIÇÃO DO NOME DA ESCOLA ---
-# Se encontrou o nome, preenche o placeholder lá no topo
+# EXIBIÇÃO DO NOME DA ESCOLA
 if nome_escola:
-    school_header.markdown(f"#### {nome_escola}")
+    school_header.markdown(f"#### 🏫 {nome_escola}")
 
 if df is not None:
     if df.empty:
         st.warning(
             "⚠️ O arquivo foi carregado, mas não foram encontrados dados válidos.")
     else:
-        # Linha 1: Turma (Esq) e Tipo de Observação (Dir)
-
         turmas_disponiveis = sorted(df['turma'].unique())
 
         if not turmas_disponiveis:
@@ -140,12 +156,16 @@ if df is not None:
 
         # --- COLUNA 1: TURMA ---
         with col_topo_1:
-            turma_sel = st.selectbox("Selecione a Turma:", turmas_disponiveis)
+            turma_sel = st.selectbox(
+                "Selecione a Turma:",
+                turmas_disponiveis,
+                on_change=limpar_selecao_alunos
+            )
 
         # --- LÓGICA DO TIPO ---
         textos_base = {
-            "1": "Retido freq. ano anterior -> Reclassificado",
-            "2": "Retido freq. ano atual -> Reclassificar",
+            "1": "Retido freq. ano anterior -> Reclassificado atual",
+            "2": "Retido freq. ano atual",
             "3": "Cumpriu PP (Notas)",
             "4": "Promovido com PP (Disciplinas)",
             "5": "Informar Turma de AEE",
@@ -170,10 +190,11 @@ if df is not None:
             tipo_selecionado = st.selectbox(
                 "Selecione o Tipo de Observação:",
                 chaves_disponiveis,
-                format_func=formatar_opcao
+                format_func=formatar_opcao,
+                on_change=limpar_selecao_alunos
             )
 
-        # Linha 2: Seleção de Alunos
+        # SELEÇÃO DE ALUNOS
         st.divider()
 
         alunos_da_turma = df[df['turma'] ==
@@ -182,7 +203,8 @@ if df is not None:
         alunos_sel = st.multiselect(
             "Selecione o(s) Aluno(s):",
             alunos_da_turma,
-            placeholder="Clique aqui para buscar e selecionar alunos..."
+            placeholder="Clique aqui para buscar e selecionar alunos...",
+            key="alunos_multiselect"
         )
 
         # INPUTS
@@ -301,13 +323,14 @@ if df is not None:
                         detalhes.append({'nome': aluno, 'turma': t_input})
                     dados_para_gerar = {'detalhes': detalhes}
 
-            # --- PREVIEW E SALVAR ---
+            # --- PREVIEW ---
             st.markdown("###")
             if st.button("👁️ Pré-visualizar Observação", type="primary"):
                 texto_gerado = utils.gerar_texto_observacao(
                     tipo_selecionado, dados_para_gerar)
                 st.session_state['preview_texto'] = texto_gerado
 
+        # --- ÁREA DE EDIÇÃO E SALVAR ---
         if 'preview_texto' in st.session_state:
             st.markdown("---")
             st.markdown("### ✏️ Editar Texto Final")
@@ -317,18 +340,24 @@ if df is not None:
                 "Edite aqui:", value=st.session_state['preview_texto'], height=150)
 
             col_act_1, col_act_2 = st.columns([1, 5])
-            if col_act_1.button("💾 Salvar"):
-                novo_id = len(st.session_state['observacoes_sessao']) + 1
-                nova_obs = (novo_id, tipo_selecionado, texto_final)
-                st.session_state['observacoes_sessao'].append(nova_obs)
 
-                st.success("Observação adicionada à fila!")
-                del st.session_state['preview_texto']
-                time.sleep(1)
-                st.rerun()
+            # Botão Salvar com Callback
+            st.button("💾 Salvar",
+                      on_click=salvar_observacao,
+                      args=(tipo_selecionado, texto_final))
+
+        # --- MENSAGEM DE SUCESSO ---
+        placeholder_msg = st.empty()
+        if st.session_state.get('sucesso_salvar'):
+            placeholder_msg = st.success("✅ Observação adicionada à fila!")
+            time.sleep(2)
+            placeholder_msg.empty()
+            st.session_state['sucesso_salvar'] = False
+
 
 # --- FILA E RODAPÉ ---
 st.divider()
+
 st.header("📄 Fila de Impressão (Observações Geradas)")
 
 obs_list = st.session_state['observacoes_sessao']
