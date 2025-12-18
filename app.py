@@ -353,8 +353,7 @@ if df is not None:
 
             st.text_area(
                 "Edite aqui:",
-                value=st.session_state['preview_texto'],
-                height=150,
+                height=180,
                 key="editor_texto"
             )
 

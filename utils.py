@@ -3,12 +3,12 @@ import datetime
 
 # --- MAPEAMENTO DE TÍTULOS PARA O PDF ---
 TITULOS_OBSERVACOES = {
-    "1": "Retido por Frequência (Ano Anterior)",
-    "2": "Retido por Frequência (Ano Atual)",
-    "3": "Progressão Parcial (Notas)",
+    "1": "Retido por Frequência (Ano Anterior) e Reclassificado",
+    "2": "Retido por Frequência (Ano Atual) / Reclassificar (Ano Seguinte)",
+    "3": "Progressão Parcial (Disciplinas e Notas)",
     "4": "Progressão Parcial (Disciplinas)",
-    "5": "Atendimento Educacional Especializado (AEE)",
-    "6": "Turma Regular (Referência AEE)",
+    "5": "Atendimento Educacional Especializado (Turma de AEE)",
+    "6": "Turma Regular (para alunos do AEE)",
     "7": "Classificação / Reclassificação"
 }
 
