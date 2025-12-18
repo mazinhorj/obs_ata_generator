@@ -2,7 +2,6 @@ from fpdf import FPDF
 import datetime
 
 # --- MAPEAMENTO DE TÍTULOS PARA O PDF ---
-# Aqui definimos o nome bonito que vai aparecer no cabeçalho de cada bloco no PDF
 TITULOS_OBSERVACOES = {
     "1": "Retido por Frequência (Ano Anterior)",
     "2": "Retido por Frequência (Ano Atual)",
@@ -39,6 +38,14 @@ TEXTOS_PADRAO = {
         "4": {
             "singular": "O aluno {nomes} foi Reclassificado em {data_registro}, de acordo com a LDBEN 9394/1996 Art. 23, § 1º e Regimento Escolar da Rede Municipal de Duque de Caxias, Art.94, Inciso III.",
             "plural":   "Os alunos {nomes} foram Reclassificados em {data_registro}, de acordo com a LDBEN 9394/1996 Art. 23, § 1º e Regimento Escolar da Rede Municipal de Duque de Caxias, Art.94, Inciso III."
+        },
+        "5": {  # NOVA OPÇÃO: Atraso Escolar
+            "singular": "O aluno {nomes} foi Reclassificado em {data_registro}, de acordo com a LDBEN 9394/1996 Art. 24, alínea b e Deliberação CME/DC nº01/2005, Art.4, Inciso IV, alínea b.",
+            "plural":   "Os alunos {nomes} foram Reclassificados em {data_registro}, de acordo com a LDBEN 9394/1996 Art. 24, alínea b e Deliberação CME/DC nº01/2005, Art.4, Inciso IV, alínea b."
+        },
+        "6": {  # NOVA OPÇÃO: Avanço de Estudos
+            "singular": "O aluno {nomes} obteve Avanço de Estudos em {data_registro}, de acordo com a LDBEN nº 9394/1996 Art. 24, inciso V, alínea c e Regimento Escolar da Rede Municipal de Duque de Caxias, Art.97.",
+            "plural":   "Os alunos {nomes} obtiveram Avanço de Estudos em {data_registro}, de acordo com a LDBEN nº 9394/1996 Art. 24, inciso V, alínea c e Regimento Escolar da Rede Municipal de Duque de Caxias, Art.97."
         }
     },
     "3": "Considerando o Regimento Escolar da Rede Municipal de Duque de Caxias, artigo 86, os alunos abaixo relacionados, em Regime de Progressão Parcial feita através de Programa de Estudos, obtiveram as seguintes médias finais:\n{lista_alunos}",
@@ -118,15 +125,11 @@ def criar_pdf(observacoes):
     for obs in observacoes:
         tipo, texto = obs[1], obs[2]
 
-        # --- ALTERAÇÃO AQUI ---
-        # Busca o nome descritivo no dicionário TITULOS_OBSERVACOES.
-        # Se não achar (erro), usa "Observação Tipo X" como fallback.
         titulo_descritivo = TITULOS_OBSERVACOES.get(
             tipo, f"Observação Tipo {tipo}")
 
         pdf.set_font("Helvetica", 'B', size=10)
         pdf.cell(0, 6, f"{titulo_descritivo}:", ln=True)
-        # ----------------------
 
         pdf.set_font("Helvetica", size=11)
         pdf.multi_cell(0, 6, texto)

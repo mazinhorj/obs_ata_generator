@@ -50,7 +50,7 @@ def is_turma_elegivel_pp(turma_str):
     except (ValueError, TypeError):
         return False
 
-# Callback para limpar seleção (usado no on_change dos selects)
+# Callback para limpar seleção
 
 
 def limpar_selecao_alunos():
@@ -58,19 +58,29 @@ def limpar_selecao_alunos():
         st.session_state['alunos_multiselect'] = []
     if 'preview_texto' in st.session_state:
         del st.session_state['preview_texto']
+    if 'editor_texto' in st.session_state:
+        del st.session_state['editor_texto']
 
 # Callback para SALVAR
 
 
-def salvar_observacao(tipo, texto):
+def salvar_observacao(tipo):
+    # BUSCA O TEXTO DIRETAMENTE DO COMPONENTE NA MEMÓRIA
+    texto_final = st.session_state.get('editor_texto', '')
+
+    if not texto_final:
+        return
+
     # 1. Salva na lista
     novo_id = len(st.session_state['observacoes_sessao']) + 1
-    nova_obs = (novo_id, tipo, texto)
+    nova_obs = (novo_id, tipo, texto_final)
     st.session_state['observacoes_sessao'].append(nova_obs)
 
-    # 2. Limpa o preview
+    # 2. Limpa o preview e o editor
     if 'preview_texto' in st.session_state:
         del st.session_state['preview_texto']
+    if 'editor_texto' in st.session_state:
+        del st.session_state['editor_texto']
 
     # 3. Limpa a seleção de alunos
     st.session_state['alunos_multiselect'] = []
@@ -230,7 +240,9 @@ if df is not None:
                         "1": "1. Sem comprovação de vida escolar",
                         "2": "2. Matrícula por transferência (Reclassificação)",
                         "3": "3. Transferência de países estrangeiros",
-                        "4": "4. Alunos com PP enviados para EJA"
+                        "4": "4. Alunos com PP enviados para EJA",
+                        "5": "5. Atraso Escolar / Distorção Idade-Ano",
+                        "6": "6. Avanço de Estudos (Desempenho Extraordinário)"
                     }
 
                     c1, c2 = st.columns([2, 1])
@@ -306,7 +318,7 @@ if df is not None:
                     dados_para_gerar = {'detalhes': detalhes}
 
                 elif tipo_selecionado == "5":
-                    st.subheader("Informar Turma de AEE")
+                    st.subheader("🏫 Informar Turma de AEE")
                     detalhes = []
                     for aluno in alunos_sel:
                         t_input = st.text_input(
@@ -315,7 +327,7 @@ if df is not None:
                     dados_para_gerar = {'detalhes': detalhes}
 
                 elif tipo_selecionado == "6":
-                    st.subheader("Informar Turma Regular")
+                    st.subheader("🏫 Informar Turma Regular")
                     detalhes = []
                     for aluno in alunos_sel:
                         t_input = st.text_input(
@@ -328,36 +340,41 @@ if df is not None:
             if st.button("👁️ Pré-visualizar Observação", type="primary"):
                 texto_gerado = utils.gerar_texto_observacao(
                     tipo_selecionado, dados_para_gerar)
-                st.session_state['preview_texto'] = texto_gerado
 
-        # --- ÁREA DE EDIÇÃO E SALVAR ---
+                st.session_state['preview_texto'] = texto_gerado
+                st.session_state['editor_texto'] = texto_gerado
+
+        # --- ÁREA DE EDIÇÃO E SALVAMENTO ---
         if 'preview_texto' in st.session_state:
             st.markdown("---")
             st.markdown("### ✏️ Editar Texto Final")
             st.markdown(
                 "_Verifique se o texto está correto antes de adicionar à lista._")
-            texto_final = st.text_area(
-                "Edite aqui:", value=st.session_state['preview_texto'], height=150)
+
+            st.text_area(
+                "Edite aqui:",
+                value=st.session_state['preview_texto'],
+                height=150,
+                key="editor_texto"
+            )
 
             col_act_1, col_act_2 = st.columns([1, 5])
 
-            # Botão Salvar com Callback
-            st.button("💾 Salvar",
-                      on_click=salvar_observacao,
-                      args=(tipo_selecionado, texto_final))
+            col_act_1.button("💾 Salvar",
+                             on_click=salvar_observacao,
+                             args=(tipo_selecionado,))
 
         # --- MENSAGEM DE SUCESSO ---
         placeholder_msg = st.empty()
+
         if st.session_state.get('sucesso_salvar'):
-            placeholder_msg = st.success("✅ Observação adicionada à fila!")
-            time.sleep(2)
+            placeholder_msg.success("✅ Observação adicionada à fila!")
+            time.sleep(1.2)
             placeholder_msg.empty()
             st.session_state['sucesso_salvar'] = False
 
-
 # --- FILA E RODAPÉ ---
 st.divider()
-
 st.header("📄 Fila de Impressão (Observações Geradas)")
 
 obs_list = st.session_state['observacoes_sessao']
