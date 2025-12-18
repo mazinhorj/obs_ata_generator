@@ -168,7 +168,7 @@ if df is not None:
             "2": "Retido freq. ano atual -> Reclassificar",
             "3": "Cumpriu PP (Inserir Disciplinas e Notas)",
             "4": "Promovido com PP (Inserir Disciplinas)",
-            "5": "Informar Turma de AEE",
+            "5": "Informar Turma de AEE (Nas turmas Regulares)",
             "6": "Informar Turma Regular (Nas turmas de AEE)",
             "7": "Classificados ou Reclassificados"
         }
