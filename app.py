@@ -139,7 +139,7 @@ if uploaded_file:
 
 # EXIBIÇÃO DO NOME DA ESCOLA
 if nome_escola:
-    school_header.markdown(f"#### 🏫 {nome_escola}")
+    school_header.markdown(f"#### {nome_escola}")
 
 if df is not None:
     if df.empty:
@@ -164,12 +164,12 @@ if df is not None:
 
         # --- LÓGICA DO TIPO ---
         textos_base = {
-            "1": "Retido freq. ano anterior -> Reclassificado atual",
-            "2": "Retido freq. ano atual",
-            "3": "Cumpriu PP (Notas)",
-            "4": "Promovido com PP (Disciplinas)",
+            "1": "Retido freq. ano anterior -> Reclassificado",
+            "2": "Retido freq. ano atual -> Reclassificar",
+            "3": "Cumpriu PP (Inserir Disciplinas e Notas)",
+            "4": "Promovido com PP (Inserir Disciplinas)",
             "5": "Informar Turma de AEE",
-            "6": "Informar Turma Regular (para turmas de AEE)",
+            "6": "Informar Turma Regular (Nas turmas de AEE)",
             "7": "Classificados ou Reclassificados"
         }
 
@@ -306,7 +306,7 @@ if df is not None:
                     dados_para_gerar = {'detalhes': detalhes}
 
                 elif tipo_selecionado == "5":
-                    st.subheader("🏫 Informar Turma de AEE")
+                    st.subheader("Informar Turma de AEE")
                     detalhes = []
                     for aluno in alunos_sel:
                         t_input = st.text_input(
@@ -315,7 +315,7 @@ if df is not None:
                     dados_para_gerar = {'detalhes': detalhes}
 
                 elif tipo_selecionado == "6":
-                    st.subheader("🏫 Informar Turma Regular")
+                    st.subheader("Informar Turma Regular")
                     detalhes = []
                     for aluno in alunos_sel:
                         t_input = st.text_input(
@@ -392,7 +392,7 @@ else:
 st.markdown(
     """
     <div class='content-footer'>
-        Desenvolvido por <b>MazinhoBigDaddy</b> - 2025
+        Desenvolvido com carinho por <b>MazinhoBigDaddy</b> - 2025
     </div>
     """,
     unsafe_allow_html=True
